@@ -1,0 +1,54 @@
+# Minimum cmake version
+cmake_minimum_required (VERSION 3.0.0)
+
+#set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
+
+set(CONSENSUS_LIB ../../CS_Consensus)
+set(BASES_INDICES_LIB ../../BasesToIndices)
+set(DEFINITIONS_DIR ../../CS_definitions)
+
+# Name of project and that it is C++ only.
+project (caller CXX)
+
+
+# ----------------------------------------------------------------------------
+# Dependencies
+# ----------------------------------------------------------------------------
+
+# Search for zlib as a dependency for SeqAn.
+find_package (ZLIB)
+find_package (BZip2)
+find_package (OpenMP)
+find_package(Boost 1.67.0 COMPONENTS iostreams)
+
+# Load the SeqAn module and fail if not found.
+find_package (SeqAn REQUIRED)
+
+# ----------------------------------------------------------------------------
+# Build Setup
+# ----------------------------------------------------------------------------
+
+# Add include directories.
+include_directories (${SEQAN_INCLUDE_DIRS})
+include_directories(${Boost_INCLUDE_DIRS})
+
+include_directories (${CONSENSUS_LIB}/source)
+include_directories(${BASES_INDICES_LIB}/source)
+include_directories(${DEFINITIONS_DIR})
+
+link_directories(${CONSENSUS_LIB}/build)
+link_directories(${BASES_INDICES_LIB}/build)
+
+# Add definitions set by find_package (SeqAn).
+add_definitions (${SEQAN_DEFINITIONS})
+
+
+# Add CXX flags found by find_package (SeqAn).
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SEQAN_CXX_FLAGS}")
+
+
+# Add executable and link against SeqAn dependencies.
+add_executable (cs-findRepeats CS_FindRepeats.cpp CS_FindRepeats-functions.cpp CS_Repeats.cpp)
+target_link_libraries (cs-findRepeats ${SEQAN_LIBRARIES} ${Boost_LIBRARIES} CS_Consensus BasesIndices)
+

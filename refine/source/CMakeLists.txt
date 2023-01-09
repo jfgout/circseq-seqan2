@@ -1,0 +1,49 @@
+# Minimum cmake version
+cmake_minimum_required (VERSION 3.0.0)
+
+set(CMAKE_BUILD_TYPE Release)
+#set(CMAKE_BUILD_TYPE Debug)
+
+
+set(EDLIB_BASE /mnt/home/software/libraries/edlib/)
+set(GFF_LIB_PATH /mnt/home/jfgout/RollingCircle/pipeline-2021/seqan2/GFF/)
+
+# Name of project and that it is C++ only.
+project (refine CXX)
+
+
+# ----------------------------------------------------------------------------
+# Dependencies
+# ----------------------------------------------------------------------------
+
+# Search for zlib as a dependency for SeqAn.
+find_package (ZLIB)
+find_package (BZip2)
+find_package (OpenMP)
+
+
+# Load the SeqAn module and fail if not found.
+find_package (SeqAn REQUIRED)
+
+# ----------------------------------------------------------------------------
+# Build Setup
+# ----------------------------------------------------------------------------
+
+# Add include directories.
+include_directories (${SEQAN_INCLUDE_DIRS})
+include_directories (${EDLIB_BASE}/edlib/include)
+include_directories (${GFF_LIB_PATH}/source)
+
+
+# Add definitions set by find_package (SeqAn).
+add_definitions (${SEQAN_DEFINITIONS})
+
+
+# Add CXX flags found by find_package (SeqAn).
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SEQAN_CXX_FLAGS}")
+
+
+# Add executable and link against SeqAn dependencies.
+add_executable (refine refine-and-output-new-sam.cpp)
+
+target_link_libraries (refine ${SEQAN_LIBRARIES} ${EDLIB_BASE}/build/lib/libedlib.a ${GFF_LIB_PATH}/build/libgff-utils.a)

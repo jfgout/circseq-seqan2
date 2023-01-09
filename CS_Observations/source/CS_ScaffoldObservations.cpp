@@ -1,0 +1,149 @@
+#include "CS_ScaffoldObservations.hpp"
+
+
+CS_ScaffoldObservations::CS_ScaffoldObservations(){
+  ;
+}
+
+
+CS_ScaffoldObservations::CS_ScaffoldObservations(const int lg, const std::string name, const int nbStrands){
+  this->init(lg, name, nbStrands);
+}
+
+void CS_ScaffoldObservations::init(const int lg, const std::string name, const int nbStrands){
+  this->name_ = name;
+  // Clearing the pre-existing vector(s) of observations. One vector per strand...
+  for(int i=0 ; i<this->vObs_.size() ; i++){
+    std::vector<CS_Observation>().swap(this->vObs_[i]);
+  }
+  
+  this->vObs_.resize(nbStrands);
+
+  for(int i=0 ; i<this->vObs_.size() ; i++){
+    this->vObs_[i].resize(lg);
+  }
+
+}
+
+
+int CS_ScaffoldObservations::addObservation(const char base, const int nb, const int pos, const int iStrand, BasesIndices &BI){
+
+  if( iStrand<0 || iStrand>=this->vObs_.size() ){ return -2; }
+  
+  if( pos<0 || pos>=this->vObs_[iStrand].size() ){ return -1; }
+
+  this->vObs_[iStrand][pos].addObservation(base, nb, BI);
+  
+  return 0;  
+}
+
+bool CS_ScaffoldObservations::print(std::ostream &os, bool printName, bool printHeader, bool printEmpty, bool combineStrands, seqan::CharString &ChrSeq, BasesIndices &BI, int oneBased){
+
+  //Os<<"Printing observations!\n";
+    
+  int nbStrands = this->vObs_.size();
+  if( combineStrands == true && nbStrands != 2 ){
+    std::cerr<<"ERROR: request to combine strands in printing of ScaffoldObservations but number of strands != 2 ("<<nbStrands<<")\n";
+    return false;
+  }
+
+  int iStrand, pos;
+
+  char tabStrands[2];
+  tabStrands[OBS_STRAND_PLUS] = '+';
+  tabStrands[OBS_STRAND_MINUS] = '-';
+  
+  // Making sure that all strands have the same number of positions:
+  int nbObsPrev = this->vObs_[0].size();
+  for(iStrand = 1 ; iStrand < nbStrands ; iStrand++){
+    if( this->vObs_[iStrand].size() != nbObsPrev ){
+      std::cerr<<"ERROR: Not all strands have the same number of positions!!!\nDetails:\n";
+      for(int ii=0 ; ii<nbStrands ; ii++){
+	std::cerr<<"Strand "<<ii<<" -> "<<this->vObs_[ii].size()<<"\n";
+      }
+      return false;
+    }
+    nbObsPrev = this->vObs_[iStrand].size();
+  }
+
+  if( printHeader == true ){
+    if( printName == true ){ os<<"chr"<<'\t'; }
+    os<<"pos";
+    if( combineStrands == true ){
+      for(int i=0 ; i<NB_BASES ; i++){
+	os<<'\t'<<BI.getBaseFromIndice(i);
+      }
+    } else {
+      if( nbStrands == 2 ){
+	for(int iss=0 ; iss<2 ; iss++){
+	  for(int i=0 ; i<NB_BASES ; i++){
+	    os<<'\t'<<BI.getBaseFromIndice(i)<<tabStrands[iss];
+	  }
+	}
+      } else {
+	// More than two strands!!!
+	for(int iss=0 ; iss<2 ; iss++){
+	  for(int i=0 ; i<NB_BASES ; i++){
+	    os<<'\t'<<BI.getBaseFromIndice(i)<<'-'<<iss;
+	  }
+	}
+      }
+    }
+    os<<'\n';
+  }
+
+  
+  int nbPos = this->vObs_[0].size();
+  std::vector< std::vector<CS_Observation> >::iterator itvo;
+  //os<<nbPos<<" positions to print.\n";
+  for(pos = 0 ; pos<nbPos ; pos++){
+    
+    if( combineStrands == true ){
+      CS_Observation obs = combineObservationsFromTwoStrands(this->vObs_[OBS_STRAND_PLUS][pos], this->vObs_[OBS_STRAND_MINUS][pos], BI);
+      if( printEmpty == true || obs.isEmpty() == false ){
+	if( printName == true ){ os<<this->name_<<'\t'; }
+	os<<pos+oneBased<<'\t'
+	  <<ChrSeq[pos]<<'\t'
+	  <<'*'<<'\t'; // <- This is the strand information.
+	obs.print(os);
+	os<<'\n';
+      }
+    } else {
+      // Print each strand on a different line
+      for(iStrand = 0 ; iStrand < nbStrands ; iStrand++){
+	if( this->vObs_[iStrand][pos].isEmpty() == false ){
+	  // There is some data to print...
+	  if( printName == true ){ os<<this->name_<<'\t'; }
+	  os<<pos+oneBased<<'\t'
+	    <<ChrSeq[pos]<<'\t'
+	    <<tabStrands[iStrand]<<'\t';
+	  this->vObs_[iStrand][pos].print(os);
+	  os<<'\n';
+	}
+      }
+    }
+
+  }
+      /* OLD VERSION:
+      bool printThisOne = false;
+      if( printEmpty == true ){ printThisOne = true; }
+      for(iStrand = 0 ; printThisOne==false && iStrand < nbStrands ; iStrand++){
+	if( this->vObs_[iStrand][pos].isEmpty() == false ){
+	  printThisOne = true;
+	}
+      }
+      if( printThisOne == true ){
+	if( printName == true ){ os<<this->name_<<'\t'; }
+	os<<pos+oneBased<<'\t'<<ChrSeq[pos]<<'\t';
+	for(iStrand = 0 ; iStrand < nbStrands ; iStrand++){
+	  os<<'\t';
+	  this->vObs_[iStrand][pos].print(os);
+	}
+	os<<'\n';
+      }
+    }
+    */
+
+
+  return true;
+}

@@ -1,0 +1,28 @@
+#ifndef _CS_SCAFFOLD_OBSERVATIONS_HPP_
+#define _CS_SCAFFOLD_OBSERVATIONS_HPP_
+
+#include "BasesIndices.hpp"
+#include "CS_Observation.hpp"
+
+#include <seqan/sequence.h>
+#include <seqan/basic.h>
+
+#include <vector>
+
+#define OBS_STRAND_PLUS 0
+#define OBS_STRAND_MINUS 1
+
+class CS_ScaffoldObservations{
+public:
+  CS_ScaffoldObservations();
+  CS_ScaffoldObservations(const int lg, const std::string name, const int nbStrands);
+  void init(const int lg, const std::string name, const int nbStrands);
+  int addObservation(const char base, const int nb, const int pos, const int iStrand, BasesIndices &BI);
+  bool print(std::ostream &os, bool printName, bool printHeader, bool printEmpty, bool combineStrands, seqan::CharString &ChrSeq, BasesIndices &BI, int oneBased);
+private:
+  std::string name_;
+  std::vector< std::vector<CS_Observation> > vObs_; // Using a vector of vector so that I can keep as many std::vector<CS_Observation> as there are strands to keep track of.
+};
+
+
+#endif
